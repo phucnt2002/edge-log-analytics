@@ -1,0 +1,25 @@
+edge_device:
+  device_id: "edge-gateway-01"
+  location: "Plant-Floor-A"
+  max_memory_mb: 256
+  worker_threads: 4
+
+ingestion:
+  batch_size: 1000
+  flush_interval_ms: 500
+  buffer_max_size: 50000
+
+storage:
+  data_dir: "data"
+  duckdb_file: "data/edge_logs.duckdb"
+  sqlite_file: "data/edge_logs.sqlite"
+  parquet_dir: "data/parquet_rollups"
+  retention_days: 7
+
+analytics:
+  sliding_window_seconds: 60
+  eval_interval_seconds: 1
+
+server:
+  host: "0.0.0.0"
+  port: 8000

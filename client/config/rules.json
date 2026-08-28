@@ -1,0 +1,23 @@
+[
+  {
+    "id": "RULE_ERR_SPIKE",
+    "name": "Tỷ lệ lỗi tăng đột biến",
+    "condition": "error_rate_pct > 15.0",
+    "severity": "CRITICAL",
+    "message": "Tỷ lệ log ERROR/CRITICAL vượt ngưỡng 15% trong cửa sổ trượt 60s"
+  },
+  {
+    "id": "RULE_HIGH_LATENCY",
+    "name": "Độ trễ P99 vượt ngưỡng an toàn",
+    "condition": "p99_latency_ms > 1500.0",
+    "severity": "WARNING",
+    "message": "Độ trễ phân vị P99 vượt quá 1500ms tại thiết bị biên"
+  },
+  {
+    "id": "RULE_CPU_OVERLOAD",
+    "name": "CPU Thiết bị Biên quá tải",
+    "condition": "avg_cpu_usage > 85.0",
+    "severity": "CRITICAL",
+    "message": "Mức sử dụng CPU trung bình vượt ngưỡng an toàn 85%"
+  }
+]

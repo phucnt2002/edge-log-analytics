@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  # Edge Gateway 1
+  edge-node-1:
+    build: .
+    container_name: edge-gateway-01
+    environment:
+      - NODE_ID=edge-gateway-01
+    ports:
+      - "8001:8000"
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+    restart: unless-stopped
+
+  # Edge Gateway 2
+  edge-node-2:
+    build: .
+    container_name: edge-gateway-02
+    environment:
+      - NODE_ID=edge-gateway-02
+    ports:
+      - "8002:8000"
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+    restart: unless-stopped
+
+  # Edge Gateway 3
+  edge-node-3:
+    build: .
+    container_name: edge-gateway-03
+    environment:
+      - NODE_ID=edge-gateway-03
+    ports:
+      - "8003:8000"
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+    restart: unless-stopped
+
+  # Edge Gateway 4
+  edge-node-4:
+    build: .
+    container_name: edge-gateway-04
+    environment:
+      - NODE_ID=edge-gateway-04
+    ports:
+      - "8004:8000"
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+    restart: unless-stopped
+
+  # Edge Gateway 5
+  edge-node-5:
+    build: .
+    container_name: edge-gateway-05
+    environment:
+      - NODE_ID=edge-gateway-05
+    ports:
+      - "8005:8000"
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+    restart: unless-stopped

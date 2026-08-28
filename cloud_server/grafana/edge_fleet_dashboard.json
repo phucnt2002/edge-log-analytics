@@ -1,0 +1,297 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": true,
+  "panels": [
+    {
+      "id": 1,
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "type": "stat",
+      "title": "Tổng Raw Logs Đã Xử Lý Tại Biên",
+      "targets": [
+        {
+          "expr": "sum(edge_logs_processed_total)",
+          "legendFormat": "Total Logs",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        }
+      }
+    },
+    {
+      "id": 2,
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "type": "stat",
+      "title": "Tiết Kiệm Băng Thông Cloud (Parquet)",
+      "targets": [
+        {
+          "expr": "avg(edge_bandwidth_saved_pct)",
+          "legendFormat": "Saved %",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 90
+              }
+            ]
+          },
+          "unit": "percent"
+        }
+      }
+    },
+    {
+      "id": 3,
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
+      "type": "stat",
+      "title": "Sự Cố Khẩn Cấp Đang Kích Hoạt",
+      "targets": [
+        {
+          "expr": "sum(edge_active_alerts_count)",
+          "legendFormat": "Active Alerts",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 4,
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "type": "stat",
+      "title": "Số Lượng Edge Gateways Online",
+      "targets": [
+        {
+          "expr": "count(edge_cpu_usage_pct)",
+          "legendFormat": "Gateways",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 5,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 4
+      },
+      "type": "timeseries",
+      "title": "Tỷ Lệ Lỗi % Cửa Sổ Trượt 60s Theo Từng Gateway",
+      "targets": [
+        {
+          "expr": "edge_error_rate_pct",
+          "legendFormat": "{{node_id}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth"
+          },
+          "unit": "percent"
+        }
+      }
+    },
+    {
+      "id": 6,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 4
+      },
+      "type": "timeseries",
+      "title": "Độ Trễ Phân Vị P99 (ms) Tính Bằng DuckDB Vectorized",
+      "targets": [
+        {
+          "expr": "edge_p99_latency_ms",
+          "legendFormat": "{{node_id}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth"
+          },
+          "unit": "ms"
+        }
+      }
+    },
+    {
+      "id": 7,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 12
+      },
+      "type": "bargauge",
+      "title": "Mức Tiêu Thụ RAM Thực Tế (Giới Hạn Cứng 512MB / Node)",
+      "targets": [
+        {
+          "expr": "edge_memory_usage_bytes / 1024 / 1024",
+          "legendFormat": "{{node_id}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "max": 512,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 256
+              },
+              {
+                "color": "red",
+                "value": 450
+              }
+            ]
+          },
+          "unit": "decmbytes"
+        }
+      }
+    },
+    {
+      "id": 8,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 12
+      },
+      "type": "timeseries",
+      "title": "Mức Độ Tải CPU (%) Của Từng Thiết Bị Biên",
+      "targets": [
+        {
+          "expr": "edge_cpu_usage_pct",
+          "legendFormat": "{{node_id}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line"
+          },
+          "unit": "percent"
+        }
+      }
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": [
+    "edge",
+    "duckdb",
+    "iot"
+  ],
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Edge Fleet Monitoring Dashboard (DuckDB In-Situ)",
+  "uid": "edge-fleet-duckdb"
+}

@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  # 1. Prometheus Server: Cào và lưu trữ Time-series Metrics từ VM 1 (Client)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: cloud-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    restart: unless-stopped
+
+  # 2. Grafana Server: Trực quan hóa số liệu toàn mạng lưới Edge
+  grafana:
+    image: grafana/grafana:latest
+    container_name: cloud-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+    restart: unless-stopped
+
+  # 3. Cloud Parquet Receiver: Nhận các file tóm tắt Parquet gửi từ Client
+  cloud-receiver:
+    build:
+      context: ./receiver
+    container_name: cloud-receiver
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./cloud_data:/app/cloud_data
+    restart: unless-stopped
+
+volumes:
+  prometheus_data:
+  grafana_data:
