@@ -12,8 +12,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1.0'
-          memory: 128M
+          cpus: '4.0'
+          memory: 512M
     restart: unless-stopped
 
   # Edge Gateway 2
@@ -27,8 +27,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1.0'
-          memory: 128M
+          cpus: '4.0'
+          memory: 512M
     restart: unless-stopped
 
   # # Edge Gateway 3

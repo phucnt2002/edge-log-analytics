@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="/static/css/style.css">
-    <script src="/static/js/app.js"></script>
+    <script src="/static/js/app.js?v=3.0"></script>
 </head>
 <body class="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
 
@@ -112,9 +112,22 @@
                     </h2>
                     <p class="text-xs text-slate-400 mt-0.5">Đo lường trực tiếp trên phần cứng thiết bị biên với cùng một tập dữ liệu log</p>
                 </div>
-                <button onclick="window.runWebBenchmark()" id="btn-run-bench" class="px-4 py-2 text-xs font-bold rounded-lg bg-sky-600 hover:bg-sky-500 text-white transition shadow shadow-sky-600/30 flex items-center gap-1.5 self-start sm:self-auto">
-                    <span>🚀 Chạy Lại Benchmark (100K Rows)</span>
-                </button>
+                <div class="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+                    <div class="flex items-center gap-1.5 bg-slate-900 border border-slate-700 rounded-lg p-1">
+                        <span class="text-[11px] text-slate-400 pl-2">Số Logs:</span>
+                        <input type="number" id="input-bench-rows" value="1000000" min="1000" max="50000000" step="100000"
+                            class="w-32 bg-slate-800 text-sky-400 font-mono text-xs px-2 py-1 rounded border border-slate-700 focus:border-sky-500 focus:outline-none text-right font-bold">
+                        <div class="flex items-center gap-1 pr-1">
+                            <button type="button" onclick="window.setPresetRows(100000)" class="px-2 py-0.5 text-[10px] rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition">100K</button>
+                            <button type="button" onclick="window.setPresetRows(500000)" class="px-2 py-0.5 text-[10px] rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition">500K</button>
+                            <button type="button" onclick="window.setPresetRows(1000000)" class="px-2 py-0.5 text-[10px] rounded bg-sky-600/30 text-sky-300 hover:bg-sky-600/50 transition font-semibold">1M</button>
+                            <button type="button" onclick="window.setPresetRows(2000000)" class="px-2 py-0.5 text-[10px] rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition">2M</button>
+                        </div>
+                    </div>
+                    <button onclick="window.runWebBenchmark()" id="btn-run-bench" class="px-4 py-2 text-xs font-bold rounded-lg bg-sky-600 hover:bg-sky-500 text-white transition shadow shadow-sky-600/30 flex items-center gap-1.5">
+                        <span>🚀 Chạy Benchmark</span>
+                    </button>
+                </div>
             </div>
 
             <div id="bench-loading" class="hidden py-10 text-center">

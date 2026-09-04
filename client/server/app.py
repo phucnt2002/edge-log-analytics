@@ -55,6 +55,7 @@ class ConnectionManager:
 manager = ConnectionManager()
 
 def on_new_metric(metrics: dict):
+    metrics["bandwidth_saved_pct"] = cloud_syncer.latest_bandwidth_saved_pct
     update_prometheus_metrics(metrics, len(alert_manager.recent_alerts))
     asyncio.create_task(manager.broadcast({"type": "metric_update", "data": metrics}))
 
@@ -126,9 +127,12 @@ async def api_run_benchmark(rows: int = 100000):
 @app.get("/api/benchmark-results")
 async def api_get_benchmark_results():
     json_path = os.path.join(DATA_DIR, "benchmark_results.json")
-    if os.path.exists(json_path):
-        with open(json_path, "r", encoding="utf-8") as f:
-            return json.load(f)
+    if os.path.exists(json_path) and os.path.getsize(json_path) > 0:
+        try:
+            with open(json_path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
     return {"error": "Chưa chạy benchmark"}
 
 @app.get("/api/benchmark-image")

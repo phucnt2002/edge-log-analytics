@@ -176,24 +176,43 @@ async function triggerRollup() {
     }
 }
 
+function setPresetRows(val) {
+    const input = document.getElementById('input-bench-rows');
+    if (input) {
+        input.value = val;
+    }
+}
+
 async function runWebBenchmark() {
+    const rowsInput = document.getElementById('input-bench-rows');
+    let rows = parseInt(rowsInput ? rowsInput.value : 1000000) || 1000000;
+    if (rows < 1000) rows = 1000;
+    if (rows > 50000000) rows = 50000000;
+    console.log(`[Edge Log Analytics] Chạy benchmark với ${rows} logs`);
+
     const btn = document.getElementById('btn-run-bench');
     const loading = document.getElementById('bench-loading');
     const tableDiv = document.getElementById('bench-table-container');
     const imgElem = document.getElementById('bench-chart-img');
 
     if (btn) btn.disabled = true;
-    if (loading) loading.classList.remove('hidden');
+    if (loading) {
+        loading.classList.remove('hidden');
+        const p = loading.querySelector('p');
+        if (p) p.innerText = `Đang sinh dữ liệu, nạp CSDL và đo lường đối chuẩn ${rows.toLocaleString()} logs...`;
+    }
     if (tableDiv) tableDiv.classList.add('hidden');
 
     try {
-        const res = await fetch('/api/run-benchmark?rows=100000', { method: 'POST' });
+        const res = await fetch(`/api/run-benchmark?rows=${rows}`, { method: 'POST' });
         const json = await res.json();
         
         if (json.status === 'success') {
             renderBenchmarkTable(json.data);
             if (imgElem) imgElem.src = '/api/benchmark-image?t=' + new Date().getTime();
             if (tableDiv) tableDiv.classList.remove('hidden');
+        } else {
+            alert('Lỗi: ' + (json.error || 'Không thể chạy benchmark'));
         }
     } catch (e) {
         alert('Lỗi chạy benchmark: ' + e);
@@ -222,12 +241,19 @@ function renderBenchmarkTable(data) {
     `;
 
     for (const [k, q] of Object.entries(data.queries)) {
+        const duckCell = q.duckdb_1t_ms 
+            ? `${q.duckdb_4t_ms || q.duckdb_ms} ms <span class="text-[10px] text-slate-400 block">(1T: ${q.duckdb_1t_ms} ms)</span>`
+            : `${q.duckdb_ms} ms`;
+        const speedupCell = q.speedup_1t
+            ? `${q.speedup_4t || q.speedup}x Nhanh hơn <span class="text-[10px] text-sky-400 block">${q.speedup_1t}x (Thuần 1T)</span>`
+            : `${q.speedup}x Nhanh hơn`;
+
         rowsHtml += `
             <tr class="border-b border-slate-800 hover:bg-slate-800/30">
                 <td class="py-2 px-3 text-slate-300 text-xs">${q.name}</td>
-                <td class="py-2 px-3 text-sky-400 font-semibold">${q.duckdb_ms} ms</td>
+                <td class="py-2 px-3 text-sky-400 font-semibold">${duckCell}</td>
                 <td class="py-2 px-3 text-rose-400 font-semibold">${q.sqlite_ms} ms</td>
-                <td class="py-2 px-3 text-emerald-400 font-bold">${q.speedup}x Nhanh hơn</td>
+                <td class="py-2 px-3 text-emerald-400 font-bold">${speedupCell}</td>
             </tr>
         `;
     }
@@ -235,6 +261,7 @@ function renderBenchmarkTable(data) {
 }
 
 window.runWebBenchmark = runWebBenchmark;
+window.setPresetRows = setPresetRows;
 window.triggerRollup = triggerRollup;
 window.renderBenchmarkTable = renderBenchmarkTable;
 

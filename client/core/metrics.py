@@ -56,5 +56,5 @@ def update_prometheus_metrics(metrics_dict: dict, alerts_count: int = 0):
     P99_LATENCY.labels(node_id=NODE_ID).set(metrics_dict.get("p99_latency", 0.0))
     MEMORY_USAGE.labels(node_id=NODE_ID).set(ram_bytes)
     CPU_USAGE.labels(node_id=NODE_ID).set(cpu_pct or metrics_dict.get("avg_cpu", 0.0))
-    BANDWIDTH_SAVED.labels(node_id=NODE_ID).set(92.3)
+    BANDWIDTH_SAVED.labels(node_id=NODE_ID).set(metrics_dict.get("bandwidth_saved_pct", 0.0))
     ACTIVE_ALERTS.labels(node_id=NODE_ID).set(alerts_count)
