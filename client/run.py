@@ -1,16 +1,65 @@
 import sys
 sys.stdout.reconfigure(encoding='utf-8', errors='ignore')
 import os
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
+
+# Fix PyCharm 2024 debugger bug with Python 3.12+ and Uvicorn (loop_factory error)
+def _patch_pycharm_debugger():
+    import asyncio
+    try:
+        orig_run = asyncio.run
+        def safe_asyncio_run(main, *args, **kwargs):
+            kwargs.pop("loop_factory", None)
+            try:
+                return orig_run(main, *args, **kwargs)
+            except TypeError:
+                return orig_run(main)
+        asyncio.run = safe_asyncio_run
+    except Exception:
+        pass
+
+    try:
+        import uvicorn.server
+        orig_uvicorn_run = uvicorn.server.asyncio_run
+        def safe_uvicorn_run(main, *args, **kwargs):
+            kwargs.pop("loop_factory", None)
+            try:
+                return orig_uvicorn_run(main, *args, **kwargs)
+            except TypeError:
+                return orig_uvicorn_run(main)
+        uvicorn.server.asyncio_run = safe_uvicorn_run
+    except Exception:
+        pass
+
+    try:
+        import uvicorn._compat
+        orig_compat_run = uvicorn._compat.asyncio_run
+        def safe_compat_run(main, *args, **kwargs):
+            kwargs.pop("loop_factory", None)
+            try:
+                return orig_compat_run(main, *args, **kwargs)
+            except TypeError:
+                return orig_compat_run(main)
+        uvicorn._compat.asyncio_run = safe_compat_run
+    except Exception:
+        pass
+
+_patch_pycharm_debugger()
+
 import uvicorn
 from benchmark.runner import run_benchmark
 from benchmark.visualizer import generate_charts
+
 
 def main():
     print("====================================================================")
     print("      EDGE LOG ANALYTICS ENGINE: DUCKDB vs SQLITE IN-SITU           ")
     print("====================================================================")
     
-    data_dir = "data"
+    data_dir = os.path.join(BASE_DIR, "data")
     os.makedirs(data_dir, exist_ok=True)
     bench_json = os.path.join(data_dir, "benchmark_results.json")
     bench_img = os.path.join(data_dir, "benchmark_results.png")

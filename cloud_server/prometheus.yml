@@ -3,10 +3,9 @@ global:
   evaluation_interval: 5s
 
 scrape_configs:
-  - job_name: "edge_iot_fleet"
+  - job_name: "edge_fleet_containers"
     metrics_path: "/metrics"
     static_configs:
-      # THAY IP_VM_1_PUBLIC BẰNG ĐỊA CHỈ IP CỦA MÁY CLIENT (VM 1)
       - targets:
-          - "host.docker.internal:8001" # Edge Node 01
-          - "host.docker.internal:8002" # Edge Node 02
+          - "edge-gateway-01:8000"
+          - "edge-gateway-02:8000"

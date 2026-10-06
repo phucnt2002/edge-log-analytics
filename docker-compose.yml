@@ -1,0 +1,104 @@
+version: '3.8'
+
+networks:
+  edge-cloud-net:
+    name: edge-cloud-net
+    driver: bridge
+
+services:
+  # ========================================================
+  # TẦNG BIÊN (EDGE COMPUTING FLEET)
+  # ========================================================
+  edge-gateway-01:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: edge-gateway-01
+    environment:
+      - NODE_ID=edge-gateway-01
+      - PORT=8000
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./client/data:/app/data
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 512M
+    networks:
+      - edge-cloud-net
+    restart: unless-stopped
+
+  edge-gateway-02:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: edge-gateway-02
+    environment:
+      - NODE_ID=edge-gateway-02
+      - PORT=8000
+    ports:
+      - "8002:8000"
+    volumes:
+      - ./client/data:/app/data
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 512M
+    networks:
+      - edge-cloud-net
+    restart: unless-stopped
+
+  # ========================================================
+  # TẦNG ĐÁM MÂY (CENTRAL CLOUD PLATFORM)
+  # ========================================================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: cloud-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./cloud_server/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - edge-cloud-net
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: cloud-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./cloud_server/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ./cloud_server/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - ./cloud_server/grafana/edge_fleet_dashboard.json:/etc/grafana/provisioning/dashboards/json/edge_fleet_dashboard.json
+    networks:
+      - edge-cloud-net
+    restart: unless-stopped
+
+  cloud-receiver:
+    build:
+      context: ./cloud_server/receiver
+      dockerfile: Dockerfile
+    container_name: cloud-receiver
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./cloud_server/cloud_data:/app/cloud_data
+    networks:
+      - edge-cloud-net
+    restart: unless-stopped
+
+volumes:
+  prometheus_data:
+  grafana_data:

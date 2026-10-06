@@ -8,6 +8,10 @@ import datetime
 import pyarrow as pa
 from typing import Dict, Any
 
+CLIENT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if CLIENT_DIR not in sys.path:
+    sys.path.insert(0, CLIENT_DIR)
+
 from core.duckdb_engine import DuckDBEngine
 from core.sqlite_engine import SQLiteEngine
 from benchmark.generator import generate_log_batch
@@ -25,10 +29,13 @@ def run_benchmark(total_rows: int = 100000, batch_size: int = None) -> Dict[str,
     print(f"  BẮT ĐẦU BENCHMARK ĐỐI CHUẨN: DUCKDB vs SQLITE ({total_rows:,} ROWS)  ")
     print(f"====================================================================\n")
 
-    data_dir = "data/benchmark"
+    data_dir = os.path.join(CLIENT_DIR, "data", "benchmark")
     os.makedirs(data_dir, exist_ok=True)
-    duck_path = os.path.join(data_dir, "bench.duckdb")
-    sqlite_path = os.path.join(data_dir, "bench.sqlite")
+    node_id = os.getenv("NODE_ID", "")
+    duck_name = f"bench_{node_id}.duckdb" if node_id else "bench.duckdb"
+    sqlite_name = f"bench_{node_id}.sqlite" if node_id else "bench.sqlite"
+    duck_path = os.path.join(data_dir, duck_name)
+    sqlite_path = os.path.join(data_dir, sqlite_name)
 
     for p in [duck_path, sqlite_path, sqlite_path + "-wal", sqlite_path + "-shm"]:
         if os.path.exists(p):
@@ -53,8 +60,8 @@ def run_benchmark(total_rows: int = 100000, batch_size: int = None) -> Dict[str,
         batch = generate_log_batch(batch_size, start_time + datetime.timedelta(seconds=offset))
         tbl = pa.Table.from_pylist(batch)
         tuples = [
-            (str(r["timestamp"]), r["device_id"], r["log_level"], r["service_name"],
-             r["cpu_usage"], r["memory_free_mb"], r["latency_ms"], r["status_code"], r["message"])
+            (str(r["timestamp"]), r["client_ip"], r["method"], r["endpoint"],
+             r["status_code"], r["bytes_sent"], r.get("latency_ms", 0.0), r["label"], r["attack_type"], r.get("referer", "-"))
             for r in batch
         ]
 
@@ -66,7 +73,7 @@ def run_benchmark(total_rows: int = 100000, batch_size: int = None) -> Dict[str,
         # C. Bấm giờ NẠP THUẦN TÚY vào SQLite
         t0 = time.perf_counter()
         with sqlite.conn:
-            sqlite.conn.executemany("INSERT INTO edge_logs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);", tuples)
+            sqlite.conn.executemany("INSERT INTO edge_logs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);", tuples)
         t_sqlite_ingest += time.perf_counter() - t0
 
         # Giải phóng rác RAM ngay trong vòng lặp
@@ -78,9 +85,10 @@ def run_benchmark(total_rows: int = 100000, batch_size: int = None) -> Dict[str,
     print(f"   -> SQLite Ingestion: {sqlite_ingest_rate:,.0f} rows/s (Thời gian nạp thuần: {t_sqlite_ingest:.2f}s)")
 
     # Tạo Index tối ưu cho SQLite để đảm bảo cạnh tranh công bằng
-    print("   -> Đang tạo Index tối ưu trên SQLite (idx_logs_latency, idx_logs_level)...")
-    sqlite.conn.execute("CREATE INDEX IF NOT EXISTS idx_logs_latency ON edge_logs(latency_ms);")
-    sqlite.conn.execute("CREATE INDEX IF NOT EXISTS idx_logs_level ON edge_logs(log_level);")
+    print("   -> Đang tạo Index tối ưu trên SQLite (idx_logs_label, idx_logs_status, idx_logs_bytes)...")
+    sqlite.conn.execute("CREATE INDEX IF NOT EXISTS idx_logs_label ON edge_logs(label);")
+    sqlite.conn.execute("CREATE INDEX IF NOT EXISTS idx_logs_status ON edge_logs(status_code);")
+    sqlite.conn.execute("CREATE INDEX IF NOT EXISTS idx_logs_bytes ON edge_logs(bytes_sent);")
     sqlite.conn.commit()
 
     # 3. ĐO LƯỜNG DUNG LƯỢNG LƯU TRỮ TRÊN ĐĨA
@@ -97,41 +105,41 @@ def run_benchmark(total_rows: int = 100000, batch_size: int = None) -> Dict[str,
     print(f"   -> Tiết kiệm không gian đĩa         : {((sqlite_size_mb - duck_size_mb)/sqlite_size_mb)*100:.1f}%")
 
     # 4. TRUY VẤN ĐỐI CHUẨN (DUCKDB 1-THREAD vs DUCKDB 4-THREADS vs SQLITE 1-THREAD)
-    print("\n[*] 4/4: Thực thi bộ 5 truy vấn phân tích (DuckDB 1T, DuckDB 4T vs SQLite 1T)...")
+    print("\n[*] 4/4: Thực thi bộ 5 truy vấn phân tích An ninh mạng (DuckDB 1T, DuckDB 4T vs SQLite 1T)...")
     
     queries = {
         "Q1_Count_Filter": {
-            "name": "Q1: Point Filter & Count (Lọc log lỗi)",
-            "duck_sql": "SELECT COUNT(*) FROM edge_logs WHERE log_level IN ('ERROR', 'CRITICAL');",
-            "sqlite_sql": "SELECT COUNT(*) FROM edge_logs WHERE log_level IN ('ERROR', 'CRITICAL');"
+            "name": "Q1: Attack Detection & Count (Đếm log tấn công)",
+            "duck_sql": "SELECT COUNT(*) FROM edge_logs WHERE label = 'attack';",
+            "sqlite_sql": "SELECT COUNT(*) FROM edge_logs WHERE label = 'attack';"
         },
         "Q2_Group_By": {
-            "name": "Q2: Multi-dim Group By (Thống kê theo thiết bị)",
-            "duck_sql": "SELECT device_id, log_level, COUNT(*), AVG(latency_ms) FROM edge_logs GROUP BY device_id, log_level;",
-            "sqlite_sql": "SELECT device_id, log_level, COUNT(*), AVG(latency_ms) FROM edge_logs GROUP BY device_id, log_level;"
+            "name": "Q2: Multi-dim Group By (Thống kê theo IP & Loại tấn công)",
+            "duck_sql": "SELECT client_ip, attack_type, COUNT(*), AVG(bytes_sent) FROM edge_logs WHERE label = 'attack' GROUP BY client_ip, attack_type;",
+            "sqlite_sql": "SELECT client_ip, attack_type, COUNT(*), AVG(bytes_sent) FROM edge_logs WHERE label = 'attack' GROUP BY client_ip, attack_type;"
         },
         "Q3_Window_Metrics": {
-            "name": "Q3: Heavy Multi-Agg (Tổng hợp đa chỉ số)",
+            "name": "Q3: Heavy Multi-Agg (Tổng hợp tải lỗi Server 5xx)",
             "duck_sql": """
-                SELECT COUNT(*), AVG(cpu_usage), AVG(latency_ms), MAX(latency_ms), MIN(memory_free_mb)
+                SELECT COUNT(*), AVG(bytes_sent), MAX(bytes_sent), MIN(bytes_sent)
                 FROM edge_logs
-                WHERE cpu_usage > 50.0;
+                WHERE status_code >= 500;
             """,
             "sqlite_sql": """
-                SELECT COUNT(*), AVG(cpu_usage), AVG(latency_ms), MAX(latency_ms), MIN(memory_free_mb)
+                SELECT COUNT(*), AVG(bytes_sent), MAX(bytes_sent), MIN(bytes_sent)
                 FROM edge_logs
-                WHERE cpu_usage > 50.0;
+                WHERE status_code >= 500;
             """
         },
         "Q4_Percentile_Math": {
-            "name": "Q4: P99 Latency Math (Phân vị độ trễ P99)",
-            "duck_sql": "SELECT QUANTILE_CONT(latency_ms, 0.99) FROM edge_logs;",
-            "sqlite_sql": "SELECT latency_ms FROM edge_logs ORDER BY latency_ms LIMIT 1 OFFSET (SELECT CAST(COUNT(*)*0.99 AS INT) FROM edge_logs);"
+            "name": "Q4: P99 Response Size Math (Phân vị dung lượng P99)",
+            "duck_sql": "SELECT QUANTILE_CONT(bytes_sent, 0.99) FROM edge_logs;",
+            "sqlite_sql": "SELECT bytes_sent FROM edge_logs ORDER BY bytes_sent LIMIT 1 OFFSET (SELECT CAST(COUNT(*)*0.99 AS INT) FROM edge_logs);"
         },
         "Q5_Pattern_Match": {
-            "name": "Q5: Text Pattern Search (Tìm kiếm chuỗi message)",
-            "duck_sql": "SELECT COUNT(*) FROM edge_logs WHERE message LIKE '%timeout%';",
-            "sqlite_sql": "SELECT COUNT(*) FROM edge_logs WHERE message LIKE '%timeout%';"
+            "name": "Q5: Text Pattern Search (Quét payload tiêm SQL/Admin trong URL)",
+            "duck_sql": "SELECT COUNT(*) FROM edge_logs WHERE endpoint LIKE '%union%' OR endpoint LIKE '%select%' OR endpoint LIKE '%admin%';",
+            "sqlite_sql": "SELECT COUNT(*) FROM edge_logs WHERE endpoint LIKE '%union%' OR endpoint LIKE '%select%' OR endpoint LIKE '%admin%';"
         }
     }
 
@@ -223,7 +231,7 @@ def run_benchmark(total_rows: int = 100000, batch_size: int = None) -> Dict[str,
         "queries": query_results
     }
 
-    result_json_path = "data/benchmark_results.json"
+    result_json_path = os.path.join(CLIENT_DIR, "data", "benchmark_results.json")
     with open(result_json_path, "w", encoding="utf-8") as f:
         json.dump(results, f, indent=2, ensure_ascii=False)
 

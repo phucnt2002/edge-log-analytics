@@ -1,0 +1,78 @@
+# ========================================================
+# Python Bytecode & Cache
+# ========================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# ========================================================
+# Virtual Environments
+# ========================================================
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# ========================================================
+# IDE & Code Editor Configurations
+# ========================================================
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+
+# ========================================================
+# AI Assistant & Knowledge Graph Metadata
+# ========================================================
+.ua/
+
+# ========================================================
+# Large Datasets & Archives (Kaggle CSV, Zip)
+# ========================================================
+*.csv
+*.tsv
+*.zip
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+client/data/archive/
+client/data/archive.zip
+client/data/web_server_access_logs.csv
+
+# ========================================================
+# Database Runtime & Temporary Files
+# ========================================================
+*.duckdb
+*.duckdb.wal
+*.duckdb.tmp
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.sqlite-journal
+*.db
+*.wal
+
+# ========================================================
+# Runtime Data & Exports
+# ========================================================
+client/data/benchmark/
+client/data/parquet_rollups/
+cloud_server/cloud_data/*
+!cloud_server/cloud_data/.gitkeep
+
+# ========================================================
+# Logs & System Files
+# ========================================================
+*.log
+*.pid
+.DS_Store
+Thumbs.db
+ehthumbs.db

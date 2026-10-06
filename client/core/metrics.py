@@ -46,6 +46,18 @@ ACTIVE_ALERTS = Gauge(
     ['node_id']
 )
 
+ATTACK_RATE = Gauge(
+    'edge_attack_rate_pct',
+    'Tỷ lệ phần trăm request tấn công trong cửa sổ trượt 60s',
+    ['node_id']
+)
+
+P99_BYTES = Gauge(
+    'edge_p99_bytes',
+    'Phân vị dung lượng phản hồi P99 (bytes) tính toán tại biên',
+    ['node_id']
+)
+
 def update_prometheus_metrics(metrics_dict: dict, alerts_count: int = 0):
     process = psutil.Process(os.getpid())
     ram_bytes = process.memory_info().rss
@@ -53,7 +65,9 @@ def update_prometheus_metrics(metrics_dict: dict, alerts_count: int = 0):
 
     LOGS_PROCESSED.labels(node_id=NODE_ID).inc(metrics_dict.get("new_logs_count", 0))
     ERROR_RATE.labels(node_id=NODE_ID).set(metrics_dict.get("error_rate_pct", 0.0))
+    ATTACK_RATE.labels(node_id=NODE_ID).set(metrics_dict.get("attack_rate_pct", 0.0))
     P99_LATENCY.labels(node_id=NODE_ID).set(metrics_dict.get("p99_latency", 0.0))
+    P99_BYTES.labels(node_id=NODE_ID).set(metrics_dict.get("p99_bytes", 0.0))
     MEMORY_USAGE.labels(node_id=NODE_ID).set(ram_bytes)
     CPU_USAGE.labels(node_id=NODE_ID).set(cpu_pct or metrics_dict.get("avg_cpu", 0.0))
     BANDWIDTH_SAVED.labels(node_id=NODE_ID).set(metrics_dict.get("bandwidth_saved_pct", 0.0))

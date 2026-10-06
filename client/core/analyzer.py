@@ -36,7 +36,8 @@ class StreamAnalyzer:
                 metrics["total_stored_records"] = self.duck.get_total_count()
                 self.latest_metrics = metrics
                 
-                self.alert_mgr.evaluate(metrics)
+                active_alerts = self.alert_mgr.evaluate(metrics)
+                metrics["active_alerts_count"] = len(active_alerts)
 
                 for listener in self.metric_listeners:
                     try:

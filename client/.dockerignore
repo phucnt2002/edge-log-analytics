@@ -10,5 +10,9 @@ venv/
 .gitignore
 .idea
 .vscode
-data/*.duckdb.tmp
-data/*.sqlite-journal
+data/*.duckdb*
+data/*.sqlite*
+data/*.csv
+data/*.zip
+data/parquet_rollups/
+data/benchmark/

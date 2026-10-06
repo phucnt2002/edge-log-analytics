@@ -17,14 +17,15 @@ class DuckDBEngine:
         self.conn.execute("""
             CREATE TABLE IF NOT EXISTS edge_logs (
                 timestamp TIMESTAMP,
-                device_id VARCHAR,
-                log_level VARCHAR,
-                service_name VARCHAR,
-                cpu_usage FLOAT,
-                memory_free_mb INTEGER,
-                latency_ms FLOAT,
+                client_ip VARCHAR,
+                method VARCHAR,
+                endpoint VARCHAR,
                 status_code INTEGER,
-                message VARCHAR
+                bytes_sent BIGINT,
+                latency_ms FLOAT,
+                label VARCHAR,
+                attack_type VARCHAR,
+                referer VARCHAR
             );
         """)
 
@@ -51,34 +52,43 @@ class DuckDBEngine:
         query = f"""
             SELECT 
                 COUNT(*) AS total_logs,
-                COUNT(*) FILTER (WHERE log_level IN ('ERROR', 'CRITICAL')) AS error_count,
-                ROUND(AVG(cpu_usage), 2) AS avg_cpu,
+                COUNT(*) FILTER (WHERE label = 'attack') AS attack_count,
+                COUNT(*) FILTER (WHERE status_code >= 400) AS error_count,
+                ROUND(AVG(bytes_sent), 2) AS avg_bytes,
                 ROUND(AVG(latency_ms), 2) AS avg_latency,
                 ROUND(QUANTILE_CONT(latency_ms, 0.95), 2) AS p95_latency,
                 ROUND(QUANTILE_CONT(latency_ms, 0.99), 2) AS p99_latency,
-                COUNT(DISTINCT device_id) AS active_devices
+                ROUND(QUANTILE_CONT(bytes_sent, 0.99), 2) AS p99_bytes,
+                COUNT(DISTINCT client_ip) AS active_ips
             FROM edge_logs
             WHERE timestamp >= (SELECT MAX(timestamp) FROM edge_logs) - INTERVAL '{window_seconds} SECONDS';
         """
         res = self.conn.execute(query).fetchone()
         if not res or res[0] == 0:
             return {
-                "total_logs": 0, "error_count": 0, "error_rate_pct": 0.0,
-                "avg_cpu": 0.0, "avg_latency": 0.0, "p95_latency": 0.0, "p99_latency": 0.0,
-                "active_devices": 0
+                "total_logs": 0, "attack_count": 0, "attack_rate_pct": 0.0,
+                "error_count": 0, "error_rate_pct": 0.0,
+                "avg_bytes": 0.0, "avg_latency": 0.0, "p95_latency": 0.0, "p99_latency": 0.0,
+                "p99_bytes": 0.0, "active_ips": 0, "avg_cpu": 0.0
             }
         total = res[0]
-        err_count = res[1] or 0
+        attack_count = res[1] or 0
+        err_count = res[2] or 0
+        attack_rate = round((attack_count / total) * 100.0, 2) if total > 0 else 0.0
         err_rate = round((err_count / total) * 100.0, 2) if total > 0 else 0.0
         return {
             "total_logs": total,
+            "attack_count": attack_count,
+            "attack_rate_pct": attack_rate,
             "error_count": err_count,
             "error_rate_pct": err_rate,
-            "avg_cpu": res[2] or 0.0,
-            "avg_latency": res[3] or 0.0,
-            "p95_latency": res[4] or 0.0,
-            "p99_latency": res[5] or 0.0,
-            "active_devices": res[6] or 0
+            "avg_bytes": res[3] or 0.0,
+            "avg_latency": res[4] or 0.0,
+            "p95_latency": res[5] or 0.0,
+            "p99_latency": res[6] or 0.0,
+            "p99_bytes": res[7] or 0.0,
+            "active_ips": res[8] or 0,
+            "avg_cpu": attack_rate  # Ánh xạ tỷ lệ tấn công hiển thị trên dashboard
         }
 
     def export_parquet_rollup(self, output_path: str, interval_minutes: int = 15) -> str:
@@ -87,11 +97,14 @@ class DuckDBEngine:
             COPY (
                 SELECT 
                     time_bucket(INTERVAL '{interval_minutes} MINUTES', timestamp) AS window_start,
-                    device_id,
-                    service_name,
-                    COUNT(*) AS total_events,
-                    COUNT(*) FILTER (WHERE log_level IN ('ERROR', 'CRITICAL')) AS error_events,
-                    ROUND(AVG(cpu_usage), 2) AS avg_cpu,
+                    client_ip,
+                    method,
+                    attack_type,
+                    COUNT(*) AS total_requests,
+                    COUNT(*) FILTER (WHERE label = 'attack') AS attack_requests,
+                    COUNT(*) FILTER (WHERE status_code >= 400) AS error_requests,
+                    ROUND(AVG(bytes_sent), 2) AS avg_bytes,
+                    ROUND(QUANTILE_CONT(bytes_sent, 0.99), 2) AS p99_bytes,
                     ROUND(AVG(latency_ms), 2) AS avg_latency,
                     ROUND(QUANTILE_CONT(latency_ms, 0.99), 2) AS p99_latency
                 FROM edge_logs

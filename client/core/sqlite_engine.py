@@ -16,17 +16,20 @@ class SQLiteEngine:
         self.conn.execute("""
             CREATE TABLE IF NOT EXISTS edge_logs (
                 timestamp TEXT,
-                device_id TEXT,
-                log_level TEXT,
-                service_name TEXT,
-                cpu_usage REAL,
-                memory_free_mb INTEGER,
-                latency_ms REAL,
+                client_ip TEXT,
+                method TEXT,
+                endpoint TEXT,
                 status_code INTEGER,
-                message TEXT
+                bytes_sent INTEGER,
+                latency_ms REAL,
+                label TEXT,
+                attack_type TEXT,
+                referer TEXT
             );
         """)
         self.conn.execute("CREATE INDEX IF NOT EXISTS idx_logs_ts ON edge_logs(timestamp);")
+        self.conn.execute("CREATE INDEX IF NOT EXISTS idx_logs_label ON edge_logs(label);")
+        self.conn.execute("CREATE INDEX IF NOT EXISTS idx_logs_status ON edge_logs(status_code);")
         self.conn.commit()
 
     def insert_records(self, records: List[Dict[str, Any]]):
@@ -35,20 +38,21 @@ class SQLiteEngine:
         data = [
             (
                 str(r["timestamp"]),
-                r["device_id"],
-                r["log_level"],
-                r["service_name"],
-                r["cpu_usage"],
-                r["memory_free_mb"],
-                r["latency_ms"],
+                r["client_ip"],
+                r["method"],
+                r["endpoint"],
                 r["status_code"],
-                r["message"]
+                r["bytes_sent"],
+                r.get("latency_ms", 0.0),
+                r["label"],
+                r["attack_type"],
+                r.get("referer", "-")
             )
             for r in records
         ]
         with self.conn:
             self.conn.executemany("""
-                INSERT INTO edge_logs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+                INSERT INTO edge_logs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
             """, data)
 
     def execute_query(self, sql: str, params: Optional[List[Any]] = None) -> List[tuple]:

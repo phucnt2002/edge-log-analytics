@@ -1,1 +1,102 @@
-{"total_rows":1000000,"timestamp":"2026-09-04T06:37:08.723857","benchmark_metadata":{"evaluation_context":"In-situ Edge Sliding Window Evaluation (Hot Working Set)","duckdb_threads":[1,4],"sqlite_indexing":"Enabled (idx_logs_latency, idx_logs_level, idx_logs_ts)","ingestion_method":"Pre-generated batches (Excludes Python data gen overhead)"},"ingestion":{"duckdb_rows_per_sec":314512.0,"sqlite_rows_per_sec":380417.0,"duckdb_time_sec":3.18,"sqlite_time_sec":2.63},"storage":{"duckdb_size_mb":12.26,"sqlite_size_mb":193.45,"space_saving_pct":93.7,"compression_ratio":15.78},"queries":{"Q1_Count_Filter":{"name":"Q1: Point Filter & Count (Lọc log lỗi)","duckdb_ms":3.81,"duckdb_1t_ms":9.25,"duckdb_4t_ms":3.81,"sqlite_ms":2.87,"speedup":0.8,"speedup_1t":0.3,"speedup_4t":0.8,"cold_run_ms":{"duckdb_1t":13.03,"duckdb_4t":4.18,"sqlite":3.02}},"Q2_Group_By":{"name":"Q2: Multi-dim Group By (Thống kê theo thiết bị)","duckdb_ms":16.43,"duckdb_1t_ms":22.59,"duckdb_4t_ms":16.43,"sqlite_ms":1099.91,"speedup":67.0,"speedup_1t":48.7,"speedup_4t":67.0,"cold_run_ms":{"duckdb_1t":32.81,"duckdb_4t":15.48,"sqlite":1288.19}},"Q3_Window_Metrics":{"name":"Q3: Heavy Multi-Agg (Tổng hợp đa chỉ số)","duckdb_ms":4.32,"duckdb_1t_ms":10.86,"duckdb_4t_ms":4.32,"sqlite_ms":135.17,"speedup":31.3,"speedup_1t":12.5,"speedup_4t":31.3,"cold_run_ms":{"duckdb_1t":15.29,"duckdb_4t":4.06,"sqlite":130.62}},"Q4_Percentile_Math":{"name":"Q4: P99 Latency Math (Phân vị độ trễ P99)","duckdb_ms":24.83,"duckdb_1t_ms":28.53,"duckdb_4t_ms":24.83,"sqlite_ms":18.25,"speedup":0.7,"speedup_1t":0.6,"speedup_4t":0.7,"cold_run_ms":{"duckdb_1t":32.84,"duckdb_4t":24.77,"sqlite":26.77}},"Q5_Pattern_Match":{"name":"Q5: Text Pattern Search (Tìm kiếm chuỗi message)","duckdb_ms":1.65,"duckdb_1t_ms":3.02,"duckdb_4t_ms":1.65,"sqlite_ms":179.62,"speedup":109.0,"speedup_1t":59.6,"speedup_4t":109.0,"cold_run_ms":{"duckdb_1t":3.52,"duckdb_4t":1.51,"sqlite":189.8}}}}
+{
+  "total_rows": 1000000,
+  "timestamp": "2026-10-05T13:29:09.453632",
+  "benchmark_metadata": {
+    "evaluation_context": "In-situ Edge Sliding Window Evaluation (Hot Working Set)",
+    "duckdb_threads": [
+      1,
+      4
+    ],
+    "sqlite_indexing": "Enabled (idx_logs_latency, idx_logs_level, idx_logs_ts)",
+    "ingestion_method": "Pre-generated batches (Excludes Python data gen overhead)"
+  },
+  "ingestion": {
+    "duckdb_rows_per_sec": 93251.0,
+    "sqlite_rows_per_sec": 10014.0,
+    "duckdb_time_sec": 10.72,
+    "sqlite_time_sec": 99.86
+  },
+  "storage": {
+    "duckdb_size_mb": 48.26,
+    "sqlite_size_mb": 245.91,
+    "space_saving_pct": 80.4,
+    "compression_ratio": 5.1
+  },
+  "queries": {
+    "Q1_Count_Filter": {
+      "name": "Q1: Attack Detection & Count (Đếm log tấn công)",
+      "duckdb_ms": 2.15,
+      "duckdb_1t_ms": 4.8,
+      "duckdb_4t_ms": 2.15,
+      "sqlite_ms": 0.5,
+      "speedup": 0.2,
+      "speedup_1t": 0.1,
+      "speedup_4t": 0.2,
+      "cold_run_ms": {
+        "duckdb_1t": 8.07,
+        "duckdb_4t": 3.19,
+        "sqlite": 3.5
+      }
+    },
+    "Q2_Group_By": {
+      "name": "Q2: Multi-dim Group By (Thống kê theo IP & Loại tấn công)",
+      "duckdb_ms": 3.18,
+      "duckdb_1t_ms": 8.75,
+      "duckdb_4t_ms": 3.18,
+      "sqlite_ms": 1.19,
+      "speedup": 0.4,
+      "speedup_1t": 0.1,
+      "speedup_4t": 0.4,
+      "cold_run_ms": {
+        "duckdb_1t": 40.35,
+        "duckdb_4t": 6.15,
+        "sqlite": 40.58
+      }
+    },
+    "Q3_Window_Metrics": {
+      "name": "Q3: Heavy Multi-Agg (Tổng hợp tải lỗi Server 5xx)",
+      "duckdb_ms": 2.0,
+      "duckdb_1t_ms": 4.44,
+      "duckdb_4t_ms": 2.0,
+      "sqlite_ms": 1.15,
+      "speedup": 0.6,
+      "speedup_1t": 0.3,
+      "speedup_4t": 0.6,
+      "cold_run_ms": {
+        "duckdb_1t": 8.38,
+        "duckdb_4t": 2.95,
+        "sqlite": 77.05
+      }
+    },
+    "Q4_Percentile_Math": {
+      "name": "Q4: P99 Response Size Math (Phân vị dung lượng P99)",
+      "duckdb_ms": 17.04,
+      "duckdb_1t_ms": 18.45,
+      "duckdb_4t_ms": 17.04,
+      "sqlite_ms": 28.05,
+      "speedup": 1.6,
+      "speedup_1t": 1.5,
+      "speedup_4t": 1.6,
+      "cold_run_ms": {
+        "duckdb_1t": 52.4,
+        "duckdb_4t": 24.33,
+        "sqlite": 24.44
+      }
+    },
+    "Q5_Pattern_Match": {
+      "name": "Q5: Text Pattern Search (Quét payload tiêm SQL/Admin trong URL)",
+      "duckdb_ms": 58.93,
+      "duckdb_1t_ms": 222.23,
+      "duckdb_4t_ms": 58.93,
+      "sqlite_ms": 13894.51,
+      "speedup": 235.8,
+      "speedup_1t": 62.5,
+      "speedup_4t": 235.8,
+      "cold_run_ms": {
+        "duckdb_1t": 527.96,
+        "duckdb_4t": 56.36,
+        "sqlite": 15774.71
+      }
+    }
+  }
+}

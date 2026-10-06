@@ -26,8 +26,9 @@ class CloudSyncer:
             self.latest_bandwidth_saved_pct = 0.0
 
     def trigger_rollup_export(self, interval_minutes: int = 15) -> str:
+        node_id = os.getenv("NODE_ID", "edge")
         now_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        file_path = os.path.join(self.export_dir, f"rollup_{now_str}.parquet")
+        file_path = os.path.join(self.export_dir, f"rollup_{node_id}_{now_str}.parquet")
         self.duck.export_parquet_rollup(file_path, interval_minutes=interval_minutes)
         size_kb = os.path.getsize(file_path) / 1024.0
         
@@ -39,4 +40,15 @@ class CloudSyncer:
             self.latest_bandwidth_saved_pct = round(((raw_bytes - parquet_bytes) / raw_bytes) * 100, 1)
 
         print(f"[CloudSyncer] Đã xuất bản tóm tắt Parquet nén: {file_path} ({size_kb:.1f} KB) - Tiết kiệm: {self.latest_bandwidth_saved_pct}%")
+
+        # Tự động gửi file Parquet tóm tắt lên Cloud Receiver nếu có cấu hình
+        receiver_url = os.getenv("CLOUD_RECEIVER_URL", "http://cloud-receiver:5000/api/upload-parquet")
+        if receiver_url:
+            try:
+                import requests
+                with open(file_path, "rb") as f:
+                    requests.post(receiver_url, files={"file": (os.path.basename(file_path), f)}, timeout=3)
+            except Exception:
+                pass
+
         return file_path
