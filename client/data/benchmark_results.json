@@ -1,6 +1,6 @@
 {
-  "total_rows": 1000000,
-  "timestamp": "2026-10-05T13:29:09.453632",
+  "total_rows": 2000000,
+  "timestamp": "2026-10-09T16:22:32.797192",
   "benchmark_metadata": {
     "evaluation_context": "In-situ Edge Sliding Window Evaluation (Hot Working Set)",
     "duckdb_threads": [
@@ -8,94 +8,117 @@
       4
     ],
     "sqlite_indexing": "Enabled (idx_logs_latency, idx_logs_level, idx_logs_ts)",
-    "ingestion_method": "Pre-generated batches (Excludes Python data gen overhead)"
+    "ingestion_method": "Pre-generated batches (Excludes Python data gen overhead)",
+    "peak_ram_mb": 473.07
   },
   "ingestion": {
-    "duckdb_rows_per_sec": 93251.0,
-    "sqlite_rows_per_sec": 10014.0,
-    "duckdb_time_sec": 10.72,
-    "sqlite_time_sec": 99.86
+    "duckdb_rows_per_sec": 148151.0,
+    "sqlite_rows_per_sec": 92050.0,
+    "duckdb_time_sec": 13.5,
+    "sqlite_time_sec": 21.73
   },
   "storage": {
-    "duckdb_size_mb": 48.26,
-    "sqlite_size_mb": 245.91,
+    "duckdb_size_mb": 97.76,
+    "sqlite_size_mb": 499.44,
     "space_saving_pct": 80.4,
-    "compression_ratio": 5.1
+    "compression_ratio": 5.11
+  },
+  "edge_to_cloud_sync": {
+    "duckdb_rollup_ms": 214.54,
+    "sqlite_rollup_ms": 7635.03,
+    "speedup": 35.6,
+    "duckdb_parquet_kb": 1508.2,
+    "sqlite_parquet_kb": 804.6
   },
   "queries": {
     "Q1_Count_Filter": {
       "name": "Q1: Attack Detection & Count (Đếm log tấn công)",
-      "duckdb_ms": 2.15,
-      "duckdb_1t_ms": 4.8,
-      "duckdb_4t_ms": 2.15,
-      "sqlite_ms": 0.5,
-      "speedup": 0.2,
-      "speedup_1t": 0.1,
-      "speedup_4t": 0.2,
+      "duckdb_ms": 4.94,
+      "duckdb_1t_ms": 18.43,
+      "duckdb_4t_ms": 4.94,
+      "sqlite_ms": 0.04,
+      "speedup": 0.0,
+      "speedup_1t": 0.0,
+      "speedup_4t": 0.0,
       "cold_run_ms": {
-        "duckdb_1t": 8.07,
-        "duckdb_4t": 3.19,
-        "sqlite": 3.5
+        "duckdb_1t": 32.83,
+        "duckdb_4t": 5.96,
+        "sqlite": 1.46
       }
     },
     "Q2_Group_By": {
       "name": "Q2: Multi-dim Group By (Thống kê theo IP & Loại tấn công)",
-      "duckdb_ms": 3.18,
-      "duckdb_1t_ms": 8.75,
-      "duckdb_4t_ms": 3.18,
-      "sqlite_ms": 1.19,
-      "speedup": 0.4,
-      "speedup_1t": 0.1,
-      "speedup_4t": 0.4,
+      "duckdb_ms": 8.08,
+      "duckdb_1t_ms": 24.1,
+      "duckdb_4t_ms": 8.08,
+      "sqlite_ms": 1.14,
+      "speedup": 0.1,
+      "speedup_1t": 0.0,
+      "speedup_4t": 0.1,
       "cold_run_ms": {
-        "duckdb_1t": 40.35,
-        "duckdb_4t": 6.15,
-        "sqlite": 40.58
+        "duckdb_1t": 65.01,
+        "duckdb_4t": 8.29,
+        "sqlite": 67.51
       }
     },
     "Q3_Window_Metrics": {
       "name": "Q3: Heavy Multi-Agg (Tổng hợp tải lỗi Server 5xx)",
-      "duckdb_ms": 2.0,
-      "duckdb_1t_ms": 4.44,
-      "duckdb_4t_ms": 2.0,
-      "sqlite_ms": 1.15,
-      "speedup": 0.6,
-      "speedup_1t": 0.3,
-      "speedup_4t": 0.6,
+      "duckdb_ms": 4.71,
+      "duckdb_1t_ms": 13.44,
+      "duckdb_4t_ms": 4.71,
+      "sqlite_ms": 0.4,
+      "speedup": 0.1,
+      "speedup_1t": 0.0,
+      "speedup_4t": 0.1,
       "cold_run_ms": {
-        "duckdb_1t": 8.38,
-        "duckdb_4t": 2.95,
-        "sqlite": 77.05
+        "duckdb_1t": 15.96,
+        "duckdb_4t": 4.47,
+        "sqlite": 50.4
       }
     },
     "Q4_Percentile_Math": {
       "name": "Q4: P99 Response Size Math (Phân vị dung lượng P99)",
-      "duckdb_ms": 17.04,
-      "duckdb_1t_ms": 18.45,
-      "duckdb_4t_ms": 17.04,
-      "sqlite_ms": 28.05,
-      "speedup": 1.6,
-      "speedup_1t": 1.5,
-      "speedup_4t": 1.6,
+      "duckdb_ms": 80.9,
+      "duckdb_1t_ms": 82.99,
+      "duckdb_4t_ms": 80.9,
+      "sqlite_ms": 106.89,
+      "speedup": 1.3,
+      "speedup_1t": 1.3,
+      "speedup_4t": 1.3,
       "cold_run_ms": {
-        "duckdb_1t": 52.4,
-        "duckdb_4t": 24.33,
-        "sqlite": 24.44
+        "duckdb_1t": 89.19,
+        "duckdb_4t": 82.28,
+        "sqlite": 80.7
       }
     },
     "Q5_Pattern_Match": {
       "name": "Q5: Text Pattern Search (Quét payload tiêm SQL/Admin trong URL)",
-      "duckdb_ms": 58.93,
-      "duckdb_1t_ms": 222.23,
-      "duckdb_4t_ms": 58.93,
-      "sqlite_ms": 13894.51,
-      "speedup": 235.8,
-      "speedup_1t": 62.5,
-      "speedup_4t": 235.8,
+      "duckdb_ms": 231.73,
+      "duckdb_1t_ms": 1271.7,
+      "duckdb_4t_ms": 231.73,
+      "sqlite_ms": 2877.38,
+      "speedup": 12.4,
+      "speedup_1t": 2.3,
+      "speedup_4t": 12.4,
       "cold_run_ms": {
-        "duckdb_1t": 527.96,
-        "duckdb_4t": 56.36,
-        "sqlite": 15774.71
+        "duckdb_1t": 1290.22,
+        "duckdb_4t": 246.03,
+        "sqlite": 4654.78
+      }
+    },
+    "Q6_Global_Aggregation": {
+      "name": "Q6: Global Fleet Aggregation (Gom nhóm tổng hợp toàn diện 100% logs)",
+      "duckdb_ms": 21.06,
+      "duckdb_1t_ms": 80.54,
+      "duckdb_4t_ms": 21.06,
+      "sqlite_ms": 2447.66,
+      "speedup": 116.2,
+      "speedup_1t": 30.4,
+      "speedup_4t": 116.2,
+      "cold_run_ms": {
+        "duckdb_1t": 120.87,
+        "duckdb_4t": 26.59,
+        "sqlite": 3052.61
       }
     }
   }

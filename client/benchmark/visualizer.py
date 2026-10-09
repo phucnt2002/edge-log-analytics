@@ -78,6 +78,11 @@ def generate_charts(json_path: str = "data/benchmark_results.json", output_img: 
         ax3.annotate(f'{h:.2f} MB', xy=(bar.get_x() + bar.get_width()/2, h),
                      xytext=(0, 3), textcoords="offset points", ha='center', va='bottom', fontweight='bold')
 
+    if 'edge_to_cloud_sync' in data:
+        sync = data['edge_to_cloud_sync']
+        ax3.set_xlabel(f"Rollup Parquet: DuckDB {sync['duckdb_rollup_ms']:.0f}ms vs SQLite {sync['sqlite_rollup_ms']:.0f}ms (DuckDB {sync['speedup']}x nhanh hơn)",
+                       fontweight='bold', color='#0369a1', fontsize=9.5)
+
     ax4 = axes[1, 1]
     speedups_1t = [q.get('speedup_1t', q['speedup']) for q in data['queries'].values()]
     speedups_4t = [q.get('speedup_4t', q['speedup']) for q in data['queries'].values()]

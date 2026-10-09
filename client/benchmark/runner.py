@@ -140,6 +140,11 @@ def run_benchmark(total_rows: int = 100000, batch_size: int = None) -> Dict[str,
             "name": "Q5: Text Pattern Search (Quét payload tiêm SQL/Admin trong URL)",
             "duck_sql": "SELECT COUNT(*) FROM edge_logs WHERE endpoint LIKE '%union%' OR endpoint LIKE '%select%' OR endpoint LIKE '%admin%';",
             "sqlite_sql": "SELECT COUNT(*) FROM edge_logs WHERE endpoint LIKE '%union%' OR endpoint LIKE '%select%' OR endpoint LIKE '%admin%';"
+        },
+        "Q6_Global_Aggregation": {
+            "name": "Q6: Global Fleet Aggregation (Gom nhóm tổng hợp toàn diện 100% logs)",
+            "duck_sql": "SELECT method, COUNT(*), ROUND(AVG(latency_ms), 2), SUM(bytes_sent) FROM edge_logs GROUP BY method;",
+            "sqlite_sql": "SELECT method, COUNT(*), ROUND(AVG(latency_ms), 2), SUM(bytes_sent) FROM edge_logs GROUP BY method;"
         }
     }
 
@@ -207,6 +212,38 @@ def run_benchmark(total_rows: int = 100000, batch_size: int = None) -> Dict[str,
         print(f"     DuckDB (1T): {avg_duck_1t:.2f} ms | DuckDB (4T): {avg_duck_4t:.2f} ms | SQLite (1T): {avg_sqlite:.2f} ms")
         print(f"     Speedup 1T (Vectorized): {speedup_1t:.1f}x | Speedup 4T (Parallel): {speedup_4t:.1f}x")
 
+    # 5. ĐỐI CHUẨN ĐỒNG BỘ VÒNG ĐỜI DỮ LIỆU EDGE-TO-CLOUD (ROLLUP PARQUET EXPORT)
+    print("\n[*] 5/5: Đo lường tốc độ Rollup và nén Parquet gửi lên Cloud (Edge-to-Cloud Sync)...")
+    duck_rollup_path = os.path.join(data_dir, "duck_rollup_bench.parquet")
+    sqlite_rollup_path = os.path.join(data_dir, "sqlite_rollup_bench.parquet")
+
+    # DuckDB Native Rollup (Zero-copy C++)
+    t0 = time.perf_counter()
+    duck.export_parquet_rollup(duck_rollup_path, interval_minutes=15)
+    t_duck_rollup = (time.perf_counter() - t0) * 1000.0
+    duck_rollup_size_kb = os.path.getsize(duck_rollup_path) / 1024.0
+
+    # SQLite Pipeline Rollup (Query -> Python Memory -> PyArrow -> Parquet)
+    t0 = time.perf_counter()
+    sqlite.export_parquet_rollup(sqlite_rollup_path, interval_minutes=15)
+    t_sqlite_rollup = (time.perf_counter() - t0) * 1000.0
+    sqlite_rollup_size_kb = os.path.getsize(sqlite_rollup_path) / 1024.0
+
+    rollup_speedup = t_sqlite_rollup / max(t_duck_rollup, 0.001)
+    print(f"   -> DuckDB Native C++ Rollup: {t_duck_rollup:.2f} ms | File: {duck_rollup_size_kb:.1f} KB (kèm hàm P99)")
+    print(f"   -> SQLite Python Rollup    : {t_sqlite_rollup:.2f} ms | File: {sqlite_rollup_size_kb:.1f} KB (không hàm P99)")
+    print(f"   -> DuckDB Rollup nhanh hơn : {rollup_speedup:.1f}x")
+
+    for p in [duck_rollup_path, sqlite_rollup_path]:
+        if os.path.exists(p):
+            try:
+                os.remove(p)
+            except Exception:
+                pass
+
+    process = psutil.Process()
+    peak_ram_mb = process.memory_info().rss / (1024.0 * 1024.0)
+
     results = {
         "total_rows": total_rows,
         "timestamp": datetime.datetime.now().isoformat(),
@@ -214,7 +251,8 @@ def run_benchmark(total_rows: int = 100000, batch_size: int = None) -> Dict[str,
             "evaluation_context": "In-situ Edge Sliding Window Evaluation (Hot Working Set)",
             "duckdb_threads": [1, 4],
             "sqlite_indexing": "Enabled (idx_logs_latency, idx_logs_level, idx_logs_ts)",
-            "ingestion_method": "Pre-generated batches (Excludes Python data gen overhead)"
+            "ingestion_method": "Pre-generated batches (Excludes Python data gen overhead)",
+            "peak_ram_mb": round(peak_ram_mb, 2)
         },
         "ingestion": {
             "duckdb_rows_per_sec": round(duck_ingest_rate, 0),
@@ -227,6 +265,13 @@ def run_benchmark(total_rows: int = 100000, batch_size: int = None) -> Dict[str,
             "sqlite_size_mb": round(sqlite_size_mb, 2),
             "space_saving_pct": round(((sqlite_size_mb - duck_size_mb)/sqlite_size_mb)*100, 1),
             "compression_ratio": round(compression_ratio, 2)
+        },
+        "edge_to_cloud_sync": {
+            "duckdb_rollup_ms": round(t_duck_rollup, 2),
+            "sqlite_rollup_ms": round(t_sqlite_rollup, 2),
+            "speedup": round(rollup_speedup, 1),
+            "duckdb_parquet_kb": round(duck_rollup_size_kb, 1),
+            "sqlite_parquet_kb": round(sqlite_rollup_size_kb, 1)
         },
         "queries": query_results
     }

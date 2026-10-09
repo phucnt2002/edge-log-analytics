@@ -220,21 +220,27 @@ python client/benchmark/runner.py 500000
 
 Sau khi chạy xong, kết quả lưu vào `client/data/benchmark_results.json` và xuất ảnh biểu đồ tự động tại `client/data/benchmark_results.png`.
 
-### 5 Kịch bản kiểm thử:
+### 6 Kịch bản kiểm thử chuẩn hóa (Kế thừa từ ClickBench & TSBS):
 1. **Batch Ingestion Rate (Tốc độ nạp dữ liệu):**  
    Đo tốc độ chèn qua micro-batching (Apache Arrow nạp vào DuckDB vs Prepared Statements nạp vào SQLite WAL).
-2. **Time-range & Severity Filtering:**  
-   Truy vấn lọc các log lỗi trong 15 phút gần nhất:
-   `SELECT COUNT(*) FROM edge_logs WHERE timestamp >= ? AND status_code >= 400`
-3. **Multi-dimensional Aggregation (GROUP BY):**  
-   Thống kê lưu lượng và số yêu cầu theo IP:
-   `SELECT client_ip, COUNT(*), SUM(bytes_sent) FROM edge_logs GROUP BY client_ip ORDER BY COUNT(*) DESC LIMIT 10`
-4. **Percentile / Quantile Calculation (Độ trễ P95, P99):**  
+2. **Q1 - Attack Detection & Count (Lọc & Đếm log tấn công):**  
+   `SELECT COUNT(*) FROM edge_logs WHERE label = 'attack';`
+3. **Q2 - Multi-dimensional Aggregation (Gom nhóm theo IP & Loại tấn công):**  
+   `SELECT client_ip, attack_type, COUNT(*), AVG(bytes_sent) FROM edge_logs WHERE label = 'attack' GROUP BY client_ip, attack_type;`
+4. **Q3 - Heavy Multi-Agg (Tổng hợp tải lỗi Server 5xx):**  
+   `SELECT COUNT(*), AVG(bytes_sent), MAX(bytes_sent), MIN(bytes_sent) FROM edge_logs WHERE status_code >= 500;`
+5. **Q4 - Percentile / Quantile Calculation (Độ trễ P99 Latency Math):**  
    Đo kiểm khả năng tính phân vị thời gian thực:
-   - DuckDB: Sử dụng `QUANTILE_CONT(latency_ms, 0.99)` Vectorized.
-   - SQLite: Sắp xếp toàn bộ tập dữ liệu bằng subquery.
-5. **Disk Storage Footprint & Compression Ratio:**  
-   Đo kích thước file `.duckdb` so với `.sqlite` và tính % dung lượng tiết kiệm được.
+   - DuckDB: Sử dụng `QUANTILE_CONT(bytes_sent, 0.99)` Vectorized.
+   - SQLite: Sắp xếp bằng B-Tree offset subquery.
+6. **Q5 - Text Pattern Search (Quét mẫu chuỗi URL tiêm SQL/Admin):**  
+   `SELECT COUNT(*) FROM edge_logs WHERE endpoint LIKE '%union%' OR endpoint LIKE '%select%' OR endpoint LIKE '%admin%';`
+7. **Q6 - Global Fleet Aggregation (Gom nhóm tổng hợp toàn diện 100% logs):**  
+   `SELECT method, COUNT(*), ROUND(AVG(latency_ms), 2), SUM(bytes_sent) FROM edge_logs GROUP BY method;`
+8. **Edge-to-Cloud Rollup Sync (Đo lường thời gian xuất nén Parquet ZSTD gửi về Cloud):**  
+   So sánh DuckDB Native C++ Zero-Copy Rollup (`COPY ... TO PARQUET ZSTD`) đối đầu với SQLite Python Pipeline (Query $\rightarrow$ Python Memory $\rightarrow$ PyArrow $\rightarrow$ Parquet).
+
+> 📖 **Xem tài liệu giải trình phản biện khoa học chi tiết:** [`docs/LUAN_DIEM_KHOA_HOC_VA_PHAN_BIEN.md`](docs/LUAN_DIEM_KHOA_HOC_VA_PHAN_BIEN.md)
 
 ---
 
